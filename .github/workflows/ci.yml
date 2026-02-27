@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Ensure mvnw executable
+        run: chmod +x mvnw
+
+      - name: Run tests (all modules)
+        run: ./mvnw -ntp -B test
+
+      - name: Package jars (skip tests)
+        run: ./mvnw -ntp -B -DskipTests package
+
+      - name: Docker build (all services)
+        run: |
+          docker build -t petclinic/config-server:ci ./config-server
+          docker build -t petclinic/discovery-server:ci ./discovery-server
+          docker build -t petclinic/customers-service:ci ./customers-service
+          docker build -t petclinic/vets-service:ci ./vets-service
+          docker build -t petclinic/visits-service:ci ./visits-service
+          docker build -t petclinic/api-gateway:ci ./api-gateway
