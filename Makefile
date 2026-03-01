@@ -6,7 +6,7 @@ COMPOSE := docker compose
 
 TAG ?= dev
 
-.PHONY: help test clean package docker-build up ps logs down
+.PHONY: help test clean package verify docker-build up ps logs down
 
 help:
 	@echo ""
@@ -24,6 +24,7 @@ help:
 	@echo "  make logs         - docker compose logs -f --tail=200"
 	@echo "  make down         - docker compose down"
 	@echo "  make clean        - mvn clean (all modules)"
+	@echo "  make verify       - Verify running stack (HTTP checks)"
 	@echo ""
 
 test:
@@ -54,3 +55,6 @@ logs:
 
 down:
 	$(COMPOSE) down
+
+verify:
+	bash scripts/verify.sh
