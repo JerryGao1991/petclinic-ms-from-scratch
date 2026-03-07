@@ -3,11 +3,17 @@ services:
     image: petclinic/config-server:${TAG:-dev}
     ports:
       - "8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8888/actuator/health/readiness >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   discovery-server:
     image: petclinic/discovery-server:${TAG:-dev}
     depends_on:
-      - config-server
+      config-server:
+        condition: service_healthy
     ports:
       - "8761:8761"
     environment:
@@ -16,12 +22,19 @@ services:
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
       EUREKA_CLIENT_FETCH_REGISTRY: "false"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health/readiness >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   customers-service:
     image: petclinic/customers-service:${TAG:-dev}
     depends_on:
-      - config-server
-      - discovery-server
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
@@ -29,12 +42,20 @@ services:
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health/readiness >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
 
   vets-service:
     image: petclinic/vets-service:${TAG:-dev}
     depends_on:
-      - config-server
-      - discovery-server
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     ports:
       - "8082:8082"
     environment:
@@ -42,6 +63,11 @@ services:
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health/readiness >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   visits-db:
     image: postgres:16-alpine
@@ -54,13 +80,22 @@ services:
     volumes:
       - visits-db-data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U visits -d visits -h localhost" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
 
   visits-service:
     image: petclinic/visits-service:${TAG:-dev}
     depends_on:
-      - config-server
-      - discovery-server
-      - visits-db
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      visits-db:
+        condition: service_healthy
     ports:
       - "8083:8083"
     environment:
@@ -69,15 +104,25 @@ services:
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health/readiness >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   api-gateway:
     image: petclinic/api-gateway:${TAG:-dev}
     depends_on:
-      - config-server
-      - discovery-server
-      - customers-service
-      - vets-service
-      - visits-service
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      customers-service:
+        condition: service_healthy
+      vets-service:
+        condition: service_healthy
+      visits-service:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -85,6 +130,11 @@ services:
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
 volumes:
   visits-db-data:
