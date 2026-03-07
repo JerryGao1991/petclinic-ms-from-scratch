@@ -79,24 +79,24 @@ VETS_URL="${BASE_URL}:${VETS_PORT}"
 VISITS_URL="${BASE_URL}:${VISITS_PORT}"
 
 # 1) config-server
-wait_for "config-server readiness" "${CONFIG_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "config-server health" "${CONFIG_URL}/actuator/health/readiness" "\"status\":\"UP\""
 wait_for "config-server application/default" "${CONFIG_URL}/application/default" "${EXPECTED_MESSAGE}"
 
 # 2) discovery-server
-wait_for "discovery-server readiness" "${EUREKA_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "discovery-server health" "${EUREKA_URL}/actuator/health/readiness" "\"status\":\"UP\""
 
 # 3) direct service health
-wait_for "customers-service readiness (direct)" "${CUSTOMERS_URL}/actuator/health/readiness" "\"status\":\"UP\""
-wait_for "vets-service readiness (direct)" "${VETS_URL}/actuator/health/readiness" "\"status\":\"UP\""
-wait_for "visits-service readiness (direct)" "${VISITS_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "customers-service health (direct)" "${CUSTOMERS_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "vets-service health (direct)" "${VETS_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "visits-service health (direct)" "${VISITS_URL}/actuator/health/readiness" "\"status\":\"UP\""
 
 # 4) gateway
-wait_for "api-gateway readiness" "${GATEWAY_URL}/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "api-gateway health" "${GATEWAY_URL}/actuator/health/readiness" "\"status\":\"UP\""
 
-# 5) gateway -> services (readiness)
-wait_for "gateway -> customers readiness" "${GATEWAY_URL}/customers/actuator/health/readiness" "\"status\":\"UP\""
-wait_for "gateway -> vets readiness" "${GATEWAY_URL}/vets/actuator/health/readiness" "\"status\":\"UP\""
-wait_for "gateway -> visits readiness" "${GATEWAY_URL}/visits/actuator/health/readiness" "\"status\":\"UP\""
+# 5) gateway -> services (health)
+wait_for "gateway -> customers health" "${GATEWAY_URL}/customers/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "gateway -> vets health" "${GATEWAY_URL}/vets/actuator/health/readiness" "\"status\":\"UP\""
+wait_for "gateway -> visits health" "${GATEWAY_URL}/visits/actuator/health/readiness" "\"status\":\"UP\""
 
 # 6) gateway -> services (hello)
 wait_for "gateway -> customers hello" "${GATEWAY_URL}/customers/api/hello" "\"service\":\"customers-service\"" "\"message\":\"${EXPECTED_MESSAGE}\""
