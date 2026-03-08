@@ -3,11 +3,18 @@ services:
     image: petclinic/config-server:${TAG:-dev}
     ports:
       - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: "git"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/JerryGao0805/petclinic-ms-from-scratch-config.git"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: "main"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START: "true"
+
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8888/actuator/health/readiness >/dev/null || exit 1"]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
   discovery-server:
     image: petclinic/discovery-server:${TAG:-dev}
@@ -17,6 +24,7 @@ services:
     ports:
       - "8761:8761"
     environment:
+      SPRING_PROFILES_ACTIVE: "docker"
       SPRING_CONFIG_IMPORT: "configserver:"
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
@@ -26,7 +34,8 @@ services:
       test: [ "CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health/readiness >/dev/null || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
   customers-service:
     image: petclinic/customers-service:${TAG:-dev}
@@ -38,15 +47,16 @@ services:
     ports:
       - "8081:8081"
     environment:
+      SPRING_PROFILES_ACTIVE: "docker"
       SPRING_CONFIG_IMPORT: "configserver:"
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health/readiness >/dev/null || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
 
   vets-service:
@@ -59,22 +69,23 @@ services:
     ports:
       - "8082:8082"
     environment:
+      SPRING_PROFILES_ACTIVE: "docker"
       SPRING_CONFIG_IMPORT: "configserver:"
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health/readiness >/dev/null || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
   visits-db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: visits
-      POSTGRES_USER: visits
-      POSTGRES_PASSWORD: visits
+      POSTGRES_DB: ${VISITS_DB_NAME}
+      POSTGRES_USER: ${VISITS_DB_USER}
+      POSTGRES_PASSWORD: ${VISITS_DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -84,7 +95,8 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U visits -d visits -h localhost" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
 
   visits-service:
@@ -102,13 +114,17 @@ services:
       SPRING_PROFILES_ACTIVE: "docker"
       SPRING_CONFIG_IMPORT: "configserver:"
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://visits-db:5432/${VISITS_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${VISITS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${VISITS_DB_PASSWORD}
+
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health/readiness >/dev/null || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
   api-gateway:
     image: petclinic/api-gateway:${TAG:-dev}
@@ -126,15 +142,16 @@ services:
     ports:
       - "8080:8080"
     environment:
+      SPRING_PROFILES_ACTIVE: "docker"
       SPRING_CONFIG_IMPORT: "configserver:"
       SPRING_CLOUD_CONFIG_URI: "http://config-server:8888"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://discovery-server:8761/eureka/"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness >/dev/null || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 12
+      start_period: 30s
 
 volumes:
   visits-db-data:
