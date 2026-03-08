@@ -6,23 +6,24 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.yanggao.petclinic.customers.config.DemoProperties;
 
 @RestController
 public class HelloController {
     private final String applicationName;
-    private final String demoMessage;
+    private final  DemoProperties demoProperties;
 
     public HelloController(@Value("${spring.application.name:unknown}") String applicationName,
-                           @Value("${demo.message:hello}") String demoMessage) {
+                           DemoProperties demoProperties) {
         this.applicationName = applicationName;
-        this.demoMessage = demoMessage;
+        this.demoProperties = demoProperties;
     }
 
     @GetMapping("/api/hello")
     public Map<String, Object> hello() {
         return Map.of(
                 "service", applicationName,
-                "message", demoMessage,
+                "message", demoProperties.getMessage(),
                 "timestamp", Instant.now().toString()
         );
     }
