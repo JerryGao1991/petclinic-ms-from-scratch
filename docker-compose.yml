@@ -179,7 +179,25 @@ services:
       - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
     restart: unless-stopped
 
+  tempo:
+    image: grafana/tempo:2.7.1
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    command:
+      - "-config.file=/etc/tempo/tempo.yml"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:3200/ready >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
 volumes:
   visits-db-data:
   prometheus-data:
   grafana-data:
+  tempo-data:
